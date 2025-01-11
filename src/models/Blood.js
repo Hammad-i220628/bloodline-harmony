@@ -21,7 +21,7 @@ const bloodSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['available', 'reserved', 'used'],
+    enum: ['available', 'reserved', 'used', 'expired'],
     default: 'available'
   },
   donationDate: {
