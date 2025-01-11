@@ -1,9 +1,6 @@
 const Donor = require('../models/Donor');
 const Blood = require('../models/Blood');
 
-// @desc    Create donation
-// @route   POST /api/donors/donations
-// @access  Private
 const createDonation = async (req, res) => {
   try {
     const { bloodType, units } = req.body;
@@ -84,8 +81,55 @@ const checkEligibility = async (req, res) => {
   }
 };
 
+// @desc    Update health status
+// @route   PATCH /api/donors/health-status
+// @access  Private
+const updateHealthStatus = async (req, res) => {
+  try {
+    const { healthStatus } = req.body;
+    let donor = await Donor.findOne({ userId: req.user._id });
+    
+    if (!donor) {
+      return res.status(404).json({ message: 'Donor not found' });
+    }
+
+    donor.healthStatus = healthStatus;
+    await donor.save();
+
+    res.json(donor);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Get donation certificates
+// @route   GET /api/donors/certificates
+// @access  Private
+const getDonationCertificates = async (req, res) => {
+  try {
+    const donor = await Donor.findOne({ userId: req.user._id });
+    if (!donor) {
+      return res.status(404).json({ message: 'Donor not found' });
+    }
+
+    const donations = await Blood.find({ donorId: donor._id });
+    const certificates = donations.map(donation => ({
+      certificateId: donation._id,
+      donationDate: donation.donationDate,
+      bloodType: donation.bloodType,
+      units: donation.units
+    }));
+
+    res.json(certificates);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createDonation,
   getDonationHistory,
-  checkEligibility
+  checkEligibility,
+  updateHealthStatus,
+  getDonationCertificates
 };

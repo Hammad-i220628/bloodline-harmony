@@ -1,9 +1,7 @@
 const User = require('../models/User');
 const generateToken = require('../utils/jwt');
+const bcrypt = require('bcryptjs');
 
-// @desc    Register user
-// @route   POST /api/auth/register
-// @access  Public
 const registerUser = async (req, res) => {
   try {
     const { email, password, name, phoneNumber, role } = req.body;
@@ -113,9 +111,30 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+// @desc    Reset password
+// @route   POST /api/auth/reset-password
+// @access  Private
+const resetPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (user && (await user.matchPassword(currentPassword))) {
+      user.password = newPassword;
+      await user.save();
+      res.json({ message: 'Password updated successfully' });
+    } else {
+      res.status(401).json({ message: 'Current password is incorrect' });
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  resetPassword
 };

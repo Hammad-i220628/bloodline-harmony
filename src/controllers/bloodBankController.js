@@ -1,8 +1,5 @@
 const Blood = require('../models/Blood');
 
-// @desc    View inventory
-// @route   GET /api/blood-bank/inventory
-// @access  Private/Staff
 const getInventory = async (req, res) => {
   try {
     const inventory = await Blood.find()
@@ -71,9 +68,53 @@ const processRequest = async (req, res) => {
   }
 };
 
+// @desc    Delete inventory item
+// @route   DELETE /api/blood-bank/inventory/:id
+// @access  Private/Staff
+const deleteInventory = async (req, res) => {
+  try {
+    const blood = await Blood.findById(req.params.id);
+    if (!blood) {
+      return res.status(404).json({ message: 'Inventory item not found' });
+    }
+
+    if (blood.status !== 'available') {
+      return res.status(400).json({ message: 'Cannot delete reserved or used blood' });
+    }
+
+    await blood.remove();
+    res.json({ message: 'Inventory item removed' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Update inventory status
+// @route   PATCH /api/blood-bank/inventory/:id/status
+// @access  Private/Staff
+const updateInventoryStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const blood = await Blood.findById(req.params.id);
+    
+    if (!blood) {
+      return res.status(404).json({ message: 'Inventory item not found' });
+    }
+
+    blood.status = status;
+    await blood.save();
+
+    res.json(blood);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getInventory,
   addInventory,
   getAllRequests,
-  processRequest
+  processRequest,
+  deleteInventory,
+  updateInventoryStatus
 };
